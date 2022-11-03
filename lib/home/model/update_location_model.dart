@@ -1,36 +1,23 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
-import 'dart:convert';
+import 'package:background_location_sender/utility/time_formatter.dart';
 
 class UpdateLocation {
   final double longitude;
   final double latitude;
-  final DateTime updateTime;
+  final DateTime lastUpdateTime;
 
   UpdateLocation({
     required this.longitude,
     required this.latitude,
-    required this.updateTime,
+    required this.lastUpdateTime,
   });
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
       'longitude': longitude,
       'latitude': latitude,
-      'updateTime': updateTime.millisecondsSinceEpoch,
+      'lastUpdateTime': FormatDate.convertDateTimeToAMPMDateWithSeconds(
+        dateTime: lastUpdateTime,
+      ),
     };
   }
-
-  factory UpdateLocation.fromMap(Map<String, dynamic> map) {
-    return UpdateLocation(
-      longitude: (map['longitude'] ?? 0.0) as double,
-      latitude: (map['latitude'] ?? 0.0) as double,
-      updateTime:
-          DateTime.fromMillisecondsSinceEpoch((map['updateTime'] ?? 0) as int),
-    );
-  }
-
-  String toJson() => json.encode(toMap());
-
-  factory UpdateLocation.fromJson(String source) =>
-      UpdateLocation.fromMap(json.decode(source) as Map<String, dynamic>);
 }

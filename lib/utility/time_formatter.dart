@@ -10,6 +10,10 @@ class FormatDate {
   static DateTime convertTimeToAMPMDate({required String rawTime}) =>
       DateFormat("HH:mm").parse(rawTime);
 
+  static String convertDateTimeToAMPMDateWithSeconds(
+          {required DateTime dateTime}) =>
+      DateFormat("HH:mm:ss").format(dateTime);
+
   static String convertTimeToAMPM({required String rawTime}) =>
       DateFormat.jm().format(DateFormat("HH:mm:ss")
           .parse(rawTime)); //ex: convert from 10:45:00 to 10:45 AM

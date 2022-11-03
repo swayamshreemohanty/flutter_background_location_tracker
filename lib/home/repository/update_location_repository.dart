@@ -15,7 +15,7 @@ class UpdateLocationRepository {
       final newLocation = UpdateLocation(
         longitude: longitude,
         latitude: latitude,
-        updateTime: DateTime.now(),
+        lastUpdateTime: DateTime.now(),
       );
       final data = ({
         "location": newLocation.toMap(),
