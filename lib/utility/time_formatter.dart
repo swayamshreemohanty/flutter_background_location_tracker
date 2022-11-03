@@ -12,7 +12,7 @@ class FormatDate {
 
   static String convertDateTimeToAMPMDateWithSeconds(
           {required DateTime dateTime}) =>
-      DateFormat("HH:mm:ss").format(dateTime);
+      DateFormat("yyyy-MM-dd HH:mm:ss").format(dateTime);
 
   static String convertTimeToAMPM({required String rawTime}) =>
       DateFormat.jm().format(DateFormat("HH:mm:ss")
