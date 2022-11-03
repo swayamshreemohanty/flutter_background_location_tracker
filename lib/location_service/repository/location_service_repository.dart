@@ -1,6 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'package:background_location_sender/location_service/.env.dart';
+import 'package:background_location_sender/location_service/key/.env.dart';
 import 'package:background_location_sender/location_service/model/location_address_with_latlong.dart';
 import 'package:background_location_sender/location_service/model/location_by_address.dart';
 import 'package:background_location_sender/location_service/model/location_by_address_selection.dart';
