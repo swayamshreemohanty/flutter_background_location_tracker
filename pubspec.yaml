@@ -11,9 +11,12 @@ environment:
   sdk: ">=2.18.2 <3.0.0"
 
 dependencies:
+  cloud_firestore: ^4.0.3
   cupertino_icons: ^1.0.2
   dio: ^4.0.6
   equatable: ^2.0.5
+  firebase_core: ^2.1.1
+  firebase_messaging: ^14.0.3
   flutter:
     sdk: flutter
   flutter_bloc: ^8.1.1
