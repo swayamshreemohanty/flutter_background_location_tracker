@@ -1,6 +1,7 @@
 import 'package:background_location_sender/firebase_messaging_service/service/firebase_message_service.dart';
 import 'package:background_location_sender/home/logic/cubit/update_location_on_db_cubit.dart';
 import 'package:background_location_sender/location_service/logic/location_controller/location_controller_cubit.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:location/location.dart';
@@ -16,15 +17,21 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     FirebaseMessageService().generateFirebaseMessageToken();
-    print("PELA");
     context.read<LocationControllerCubit>().locationFetchByDeviceGPS();
     Location location = Location();
-
     location.onLocationChanged.listen((LocationData currentLocation) {
-      print("BALA");
       context.read<LocationControllerCubit>().onLocationChanged(
-          currentLocation: currentLocation,
-          updateLocationOnDbCubit: context.read<UpdateLocationOnDbCubit>());
+            updateLocationOnDbCubit: context.read<UpdateLocationOnDbCubit>(),
+            longitude: currentLocation.longitude ?? 0,
+            latitude: currentLocation.latitude ?? 0,
+          );
+    });
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print('Got a message whilst in the foreground!');
+      print('Message data: ${message.data}');
+      if (message.notification != null) {
+        print('Message also contained a notification: ${message.notification}');
+      }
     });
 
     super.initState();
@@ -38,6 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const Text(
             "Your current location",

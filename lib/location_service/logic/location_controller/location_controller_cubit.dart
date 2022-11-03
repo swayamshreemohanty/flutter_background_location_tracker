@@ -2,11 +2,12 @@
 import 'package:background_location_sender/home/logic/cubit/update_location_on_db_cubit.dart';
 import 'package:background_location_sender/location_service/model/location_address_with_latlong.dart';
 import 'package:background_location_sender/location_service/repository/location_service_repository.dart';
+import 'package:background_location_sender/notification/notification.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:location/location.dart';
 
 part 'location_controller_state.dart';
 
@@ -29,13 +30,24 @@ class LocationControllerCubit extends Cubit<LocationControllerState> {
   }
 
   Future<void> onLocationChanged({
-    required LocationData currentLocation,
+    bool isbackground = false,
+    required double latitude,
+    required double longitude,
     required UpdateLocationOnDbCubit updateLocationOnDbCubit,
   }) async {
     try {
+      if (isbackground) {
+        //////////
+        final localNotification =
+            Notification(FlutterLocalNotificationsPlugin());
+        localNotification.showNotificationWithoutSound(
+          latitude: latitude,
+          longitude: longitude,
+        );
+        //////////
+      }
+
       emit(LoadingLocation());
-      final latitude = currentLocation.latitude ?? 0;
-      final longitude = currentLocation.longitude ?? 0;
       emit(LocationFetched(
         location: LocationAddressWithLatLong(
           address: "",
@@ -53,19 +65,23 @@ class LocationControllerCubit extends Cubit<LocationControllerState> {
     }
   }
 
-  Future<void> locationFetchByDeviceGPS({bool allowSetLocation = false}) async {
+  Future<LocationAddressWithLatLong?> locationFetchByDeviceGPS(
+      {bool allowSetLocation = false}) async {
     try {
       emit(LoadingLocation());
       Fluttertoast.showToast(msg: "Fetching address...");
       selectedLocation =
           await LocationServiceRepository().fetchLocationByDeviceGPS();
+
       emit(LocationFetched(
         location: selectedLocation!,
         allowSetLocation: allowSetLocation,
       ));
+      return selectedLocation;
     } catch (e) {
       Fluttertoast.showToast(msg: e.toString());
       emit(LocationError(error: e.toString()));
+      return null;
     }
   }
 
