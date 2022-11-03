@@ -1,4 +1,5 @@
 import 'package:background_location_sender/home/repository/update_location_repository.dart';
+import 'package:background_location_sender/utility/shared_preference/shared_preference.dart';
 import 'package:equatable/equatable.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -17,13 +18,15 @@ class UpdateLocationOnDbCubit extends Cubit<UpdateLocationOnDbState> {
   }) async {
     try {
       final deviceToken = await firebaseMessaging.getToken();
-
-      if (deviceToken == null) {
+      final uid =
+          await CustomSharedPreference().getData(key: SharedPreferenceKeys.uid);
+      if (deviceToken == null || uid == null) {
         Fluttertoast.showToast(msg: "Unable to update location on db");
         return;
       } else {
         await UpdateLocationRepository().updateLocationOnDB(
           deviceToken: deviceToken,
+          uid: uid,
           longitude: longitude,
           latitude: latitude,
         );

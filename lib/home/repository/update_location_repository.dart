@@ -7,11 +7,13 @@ class UpdateLocationRepository {
 
   Future<void> updateLocationOnDB({
     required String deviceToken,
+    required String uid,
     required double longitude,
     required double latitude,
   }) async {
     try {
-      final docRef = _firebaseFirestore.collection("user").doc(deviceToken);
+     
+      final docRef = _firebaseFirestore.collection("user").doc(uid);
       final newLocation = UpdateLocation(
         longitude: longitude,
         latitude: latitude,
