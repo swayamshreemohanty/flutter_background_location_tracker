@@ -1,17 +1,21 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:dio/dio.dart';
+import 'package:location/location.dart';
+import 'package:uuid/uuid.dart';
 import 'package:background_location_sender/location_service/key/.env.dart';
 import 'package:background_location_sender/location_service/model/location_address_with_latlong.dart';
 import 'package:background_location_sender/location_service/model/location_by_address.dart';
 import 'package:background_location_sender/location_service/model/location_by_address_selection.dart';
 import 'package:background_location_sender/location_service/model/location_by_geocode.dart';
-import 'package:dio/dio.dart';
-import 'package:location/location.dart';
-import 'package:uuid/uuid.dart';
 
 class LocationServiceRepository {
   final dio = Dio();
-  Location location = Location();
+  Location location;
+  LocationServiceRepository({
+    required this.location,
+  });
 
   Future<LocationAddressWithLatLong> fetchLocationByAddress({
     required String selectedAddress,
@@ -72,6 +76,7 @@ class LocationServiceRepository {
           throw ("Require GPS service permission");
         }
       }
+
       final locationData = await location.getLocation();
       return await fetchLocationByCoOrdinates(
           latitude: locationData.latitude ?? 17.6968072,
