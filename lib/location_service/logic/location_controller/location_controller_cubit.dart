@@ -1,25 +1,30 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 // ignore_for_file: use_build_context_synchronously
-import 'package:background_location_sender/home/logic/cubit/update_location_on_db_cubit.dart';
-import 'package:background_location_sender/location_service/model/location_address_with_latlong.dart';
-import 'package:background_location_sender/location_service/repository/location_service_repository.dart';
-import 'package:background_location_sender/notification/notification.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:background_location_sender/home/logic/cubit/update_location_on_db_cubit.dart';
+import 'package:background_location_sender/location_service/model/location_address_with_latlong.dart';
+import 'package:background_location_sender/location_service/repository/location_service_repository.dart';
+import 'package:background_location_sender/notification/notification.dart';
 
 part 'location_controller_state.dart';
 
 class LocationControllerCubit extends Cubit<LocationControllerState> {
-  LocationControllerCubit() : super(LoadingLocation());
+  final LocationServiceRepository locationServiceRepository;
+
+  LocationControllerCubit({
+    required this.locationServiceRepository,
+  }) : super(LoadingLocation());
 
   LocationAddressWithLatLong? selectedLocation;
 
   Future<LocationAddressWithLatLong> _getlocationSetCoOrdinates(
       {required double latitude, required double longitude}) async {
     try {
-      return await LocationServiceRepository().fetchLocationByCoOrdinates(
+      return await locationServiceRepository.fetchLocationByCoOrdinates(
         latitude: latitude,
         longitude: longitude,
       );
@@ -45,16 +50,16 @@ class LocationControllerCubit extends Cubit<LocationControllerState> {
           longitude: longitude,
         );
         //////////
+      } else {
+        emit(LoadingLocation());
+        emit(LocationFetched(
+          location: LocationAddressWithLatLong(
+            address: "",
+            latitude: latitude,
+            longitude: longitude,
+          ),
+        ));
       }
-
-      emit(LoadingLocation());
-      emit(LocationFetched(
-        location: LocationAddressWithLatLong(
-          address: "",
-          latitude: latitude,
-          longitude: longitude,
-        ),
-      ));
       updateLocationOnDbCubit.updateLocation(
         longitude: longitude,
         latitude: latitude,
@@ -65,22 +70,27 @@ class LocationControllerCubit extends Cubit<LocationControllerState> {
     }
   }
 
-  Future<LocationAddressWithLatLong?> locationFetchByDeviceGPS(
-      {bool allowSetLocation = false}) async {
+  Future<LocationAddressWithLatLong?> locationFetchByDeviceGPS({
+    bool allowSetLocation = false,
+  }) async {
     try {
       emit(LoadingLocation());
+
       Fluttertoast.showToast(msg: "Fetching address...");
       selectedLocation =
-          await LocationServiceRepository().fetchLocationByDeviceGPS();
+          await locationServiceRepository.fetchLocationByDeviceGPS();
 
       emit(LocationFetched(
         location: selectedLocation!,
         allowSetLocation: allowSetLocation,
       ));
+
       return selectedLocation;
     } catch (e) {
       Fluttertoast.showToast(msg: e.toString());
+
       emit(LocationError(error: e.toString()));
+
       return null;
     }
   }
@@ -88,8 +98,8 @@ class LocationControllerCubit extends Cubit<LocationControllerState> {
   Future<void> getLocationByAddress({required String selectedAddress}) async {
     try {
       Fluttertoast.showToast(msg: "Fetching address...");
-      selectedLocation = await LocationServiceRepository()
-          .fetchLocationByAddress(selectedAddress: selectedAddress);
+      selectedLocation = await locationServiceRepository.fetchLocationByAddress(
+          selectedAddress: selectedAddress);
       emit(LocationFetched(location: selectedLocation!));
     } catch (e) {
       Fluttertoast.showToast(msg: e.toString());
