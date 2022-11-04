@@ -43,37 +43,43 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text("Home"),
       ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const Text(
-            "Your current location",
-            style: TextStyle(fontSize: 16),
-          ),
-          BlocBuilder<LocationControllerCubit, LocationControllerState>(
-            builder: (context, state) {
-              if (state is LocationFetched) {
-                return Center(
-                  child: Column(
-                    children: [
-                      Text(
-                        "Latitude:${state.location.latitude}",
-                        style: const TextStyle(fontSize: 20),
-                      ),
-                      Text(
-                        "Longitude:${state.location.longitude}",
-                        style: const TextStyle(fontSize: 20),
-                      ),
-                    ],
-                  ),
-                );
-              } else {
-                return const SizedBox.shrink();
-              }
-            },
-          ),
-        ],
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              "Your current location",
+              style: TextStyle(fontSize: 16),
+            ),
+            BlocBuilder<LocationControllerCubit, LocationControllerState>(
+              builder: (context, state) {
+                if (state is LocationFetched) {
+                  return Center(
+                    child: Column(
+                      children: [
+                        Text(
+                          "Latitude:${state.location.latitude}",
+                          style: const TextStyle(fontSize: 20),
+                        ),
+                        Text(
+                          "Longitude:${state.location.longitude}",
+                          style: const TextStyle(fontSize: 20),
+                        ),
+                      ],
+                    ),
+                  );
+                } else if (state is LoadingLocation) {
+                  return const Text(
+                    "Loading your location...",
+                    style: TextStyle(fontSize: 18),
+                  );
+                } else {
+                  return const SizedBox.shrink();
+                }
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
