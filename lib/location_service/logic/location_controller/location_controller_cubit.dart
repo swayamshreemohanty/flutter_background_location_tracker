@@ -17,7 +17,7 @@ class LocationControllerCubit extends Cubit<LocationControllerState> {
 
   LocationControllerCubit({
     required this.locationServiceRepository,
-  }) : super(StopLocationFetch());
+  }) : super(LoadingLocation());
 
   LocationAddressWithLatLong? selectedLocation;
 
@@ -34,22 +34,13 @@ class LocationControllerCubit extends Cubit<LocationControllerState> {
     }
   }
 
-  Future<void> stopLocationFetch() async {
-    emit(LoadingLocation());
-
-    emit(StopLocationFetch());
-  }
-
   Future<void> onLocationChanged({
     bool isbackground = false,
-    bool stopUpdateScreen = false,
     required double latitude,
     required double longitude,
     required UpdateLocationOnDbCubit updateLocationOnDbCubit,
   }) async {
     try {
-      print("********************");
-      print(stopUpdateScreen);
       if (isbackground) {
         //////////
         final localNotification =
@@ -59,7 +50,7 @@ class LocationControllerCubit extends Cubit<LocationControllerState> {
           longitude: longitude,
         );
         //////////
-      } else if (!stopUpdateScreen) {
+      } else {
         emit(LoadingLocation());
         emit(LocationFetched(
           location: LocationAddressWithLatLong(
