@@ -10,6 +10,8 @@ abstract class LocationControllerState extends Equatable {
 
 class LoadingLocation extends LocationControllerState {}
 
+class StopLocationFetch extends LocationControllerState {}
+
 class LocationFetched extends LocationControllerState {
   final bool allowSetLocation;
   final LocationAddressWithLatLong location;
