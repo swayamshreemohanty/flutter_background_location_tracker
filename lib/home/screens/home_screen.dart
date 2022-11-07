@@ -19,28 +19,24 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late BackgroundService backgroundService;
-
   @pragma('vm:entry-point')
   @override
   Future<void> didChangeDependencies() async {
-    backgroundService = BackgroundService();
     FirebaseMessageService().generateFirebaseMessageToken();
-    await backgroundService.initializeService();
+    await BackgroundService().initializeService();
     final permission = await Geolocator.checkPermission();
 
-    if (permission == LocationPermission.always &&
-        await backgroundService.instance.isRunning()) {
-      Geolocator.getPositionStream().listen(
-        (Position currentLocation) async {
+    if (permission == LocationPermission.always) {
+      Geolocator.getPositionStream().listen((Position currentLocation) async {
+        if (await BackgroundService().instance.isRunning()) {
           await context.read<LocationControllerCubit>().onLocationChanged(
                 updateLocationOnDbCubit:
                     context.read<UpdateLocationOnDbCubit>(),
                 longitude: currentLocation.longitude,
                 latitude: currentLocation.latitude,
               );
-        },
-      );
+        }
+      });
     } else if (permission == LocationPermission.denied) {
       context.read<LocationControllerCubit>().locationFetchByDeviceGPS();
     }
@@ -85,7 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         // ),
                         ElevatedButton(
                           onPressed: () {
-                            backgroundService.stopService();
+                            BackgroundService().stopService();
                             context
                                 .read<LocationControllerCubit>()
                                 .stopLocationFetch();
@@ -103,7 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 } else {
                   return ElevatedButton(
                     onPressed: () async {
-                      backgroundService.startService();
+                      BackgroundService().startService();
                       context
                           .read<LocationControllerCubit>()
                           .locationFetchByDeviceGPS();
