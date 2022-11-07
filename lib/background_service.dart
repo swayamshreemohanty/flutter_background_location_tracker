@@ -3,81 +3,27 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:background_location_sender/firebase_options.dart';
 import 'package:background_location_sender/home/logic/cubit/update_location_on_db_cubit.dart';
-import 'package:background_location_sender/location_service/logic/location_controller/location_controller_cubit.dart';
-import 'package:background_location_sender/location_service/repository/location_service_repository.dart';
-import 'package:background_location_sender/utility/shared_preference/shared_preference.dart';
-import 'package:dio/dio.dart';
+import 'package:background_location_sender/notification/notification.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-
-import 'package:flutter_background_service_android/flutter_background_service_android.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:location/location.dart';
+import 'package:flutter_background_service_android/flutter_background_service_android.dart';
 
-Future<Position> _determinePosition() async {
-  bool serviceEnabled;
-  LocationPermission permission;
-
-  // Test if location services are enabled.
-  serviceEnabled = await Geolocator.isLocationServiceEnabled();
-  if (!serviceEnabled) {
-    // Location services are not enabled don't continue
-    // accessing the position and request users of the
-    // App to enable the location services.
-    return Future.error('Location services are disabled.');
-  }
-
-  permission = await Geolocator.checkPermission();
-  if (permission == LocationPermission.denied) {
-    permission = await Geolocator.requestPermission();
-    if (permission == LocationPermission.denied) {
-      // Permissions are denied, next time you could try
-      // requesting permissions again (this is also where
-      // Android's shouldShowRequestPermissionRationale
-      // returned true. According to Android guidelines
-      // your App should show an explanatory UI now.
-      return Future.error('Location permissions are denied');
-    }
-  }
-
-  if (permission == LocationPermission.deniedForever) {
-    // Permissions are denied forever, handle appropriately.
-    return Future.error(
-        'Location permissions are permanently denied, we cannot request permissions.');
-  }
-
-  // When we reach here, permissions are granted and we can
-  // continue accessing the position of the device.
-  return await Geolocator.getCurrentPosition();
-}
+const String notificationChannelId = "foreground_service";
+const int foregroundServiceNotificationId = 888;
+const String initialNotificationTitle = "LOCATION SERVICE";
+const String initialNotificationContent = "Initializing";
 
 @pragma('vm:entry-point')
-void onStart(
-  ServiceInstance service,
-  // LocationControllerCubit locationControllerCubit,
-  // UpdateLocationOnDbCubit updateLocationOnDbCubit,
-) async {
+void onStart(ServiceInstance service) async {
   DartPluginRegistrant.ensureInitialized();
   // For flutter prior to version 3.0.0
   // We have to register the plugin manually
 
-  /// OPTIONAL when use custom notification
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
-
-  double longitude = 0;
-  double latitude = 0;
-
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
-  // final oldLocation = await Location().getLocation();
-  // print("OLD LOCATION PACKAGE");
-  // print(oldLocation.longitude);
-  // print(oldLocation.latitude);
-  // print("xxxxxxxxxxxxxxxx");
 
   if (service is AndroidServiceInstance) {
     service.on('start_service').listen((event) async {
@@ -101,28 +47,27 @@ void onStart(
   Timer.periodic(const Duration(seconds: 1), (timer) async {
     if (service is AndroidServiceInstance) {
       if (await service.isForegroundService()) {
-        final location = await _determinePosition();
-        if (longitude != location.longitude || latitude != location.latitude) {
-          longitude = location.longitude;
-          latitude = location.latitude;
-          await UpdateLocationOnDbCubit().updateLocation(
-            longitude: location.longitude,
-            latitude: location.latitude,
-          );
-          flutterLocalNotificationsPlugin.show(
-            888,
-            'COOL LOCATION SERVICE',
-            'Latitude: ${location.latitude}, Longitude: ${location.longitude}',
-            const NotificationDetails(
-              android: AndroidNotificationDetails(
-                'my_foreground',
-                'AWESOME SERVICE:',
+        final permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.always) {
+          Geolocator.getPositionStream().listen((Position position) async {
+            UpdateLocationOnDbCubit().updateLocation(
+              longitude: position.longitude,
+              latitude: position.latitude,
+            );
+            await NotificationService().showNotification(
+              showNotificationId: foregroundServiceNotificationId,
+              title: 'COOL LOCATION SERVICE',
+              body:
+                  'Latitude: ${position.latitude}, Longitude: ${position.longitude}',
+              payload: "service",
+              androidNotificationDetails: const AndroidNotificationDetails(
+                notificationChannelId,
+                notificationChannelId,
                 icon: 'ic_bg_service_small',
                 ongoing: true,
               ),
-            ),
-            payload: "service",
-          );
+            );
+          });
         }
       }
     }
@@ -133,33 +78,20 @@ class BackgroundService {
   //Get instance for flutter background service plugin
   final FlutterBackgroundService flutterBackgroundService =
       FlutterBackgroundService();
-  //Background service configuration params///
-  final String notificationChannelId;
-  final String initialNotificationTitle;
-  final String initialNotificationContent;
-  final int foregroundServiceNotificationId;
+
   /////
 
-  BackgroundService({
-    required this.notificationChannelId,
-    required this.initialNotificationTitle,
-    required this.initialNotificationContent,
-    required this.foregroundServiceNotificationId,
-
-    // required this.notificationChannel,
-  });
+  BackgroundService();
 
   FlutterBackgroundService get instance => flutterBackgroundService;
 
   Future<void> initializeService() async {
-    print("*********");
-
-    // /// OPTIONAL, using custom notification channel id
+    //OPTIONAL, using custom notification channel id
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'my_foreground', // id
-      'MY FOREGROUND SERVICE', // title
-      description:
-          'This channel is used for important notifications.', // description
+      notificationChannelId, // id
+      initialNotificationTitle, // title
+      description: 'This channel is used for important notifications.',
+      // description
       importance: Importance.low, // importance must be at low or higher level
     );
 
@@ -176,28 +108,21 @@ class BackgroundService {
         // this will be executed when app is in foreground or background in separated isolate
         onStart: onStart,
         // auto start service
-        autoStart: true,
+        autoStart: false,
         isForegroundMode: true,
         notificationChannelId: notificationChannelId,
+        foregroundServiceNotificationId: foregroundServiceNotificationId,
         initialNotificationTitle: initialNotificationTitle,
         initialNotificationContent: initialNotificationContent,
-        foregroundServiceNotificationId: foregroundServiceNotificationId,
       ),
       //Currently IOS setup is not completed.
       iosConfiguration: IosConfiguration(
         // auto start service
         autoStart: true,
         // this will be executed when app is in foreground in separated isolate
-        // onForeground: (service) {
-        //   return onStart(
-        //     service,
-        //     locationControllerCubit,
-        //     updateLocationOnDbCubit,
-        //   );
-        // },
+        onForeground: onStart,
       ),
     );
-    stopService();
   }
 
   void startService() {
@@ -206,6 +131,7 @@ class BackgroundService {
   }
 
   void stopService() {
+    print("STOP");
     flutterBackgroundService.invoke("stop_service");
   }
 }
