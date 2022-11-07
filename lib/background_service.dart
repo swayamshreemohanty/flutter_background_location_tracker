@@ -101,11 +101,6 @@ void onStart(
   Timer.periodic(const Duration(seconds: 1), (timer) async {
     if (service is AndroidServiceInstance) {
       if (await service.isForegroundService()) {
-        print(
-            "***************await CustomSharedPreference().getData(key: SharedPreferenceKeys.uid********************");
-        print(
-            "+++++++++++++++++++++++${await CustomSharedPreference().getData(key: SharedPreferenceKeys.uid)}");
-
         final location = await _determinePosition();
         if (longitude != location.longitude || latitude != location.latitude) {
           longitude = location.longitude;
@@ -128,15 +123,6 @@ void onStart(
             ),
             payload: "service",
           );
-          print("+++++++++BACKGROUND DIO++++++++");
-          await Dio()
-              .post("https://colormoon.in/offos/api//customer/welcome")
-              .then((value) {
-            print("***********RESULTS**************");
-            print(value.data);
-          });
-
-      
         }
       }
     }
