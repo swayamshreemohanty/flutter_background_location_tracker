@@ -28,7 +28,6 @@ dependencies:
   geolocator: ^9.0.2
   google_maps_flutter: ^2.2.1
   intl: ^0.17.0
-  location: ^4.4.0
   shared_preferences: ^2.0.15
   uuid: ^3.0.6
   workmanager: ^0.5.1
