@@ -4,7 +4,6 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:background_location_sender/home/logic/cubit/update_location_on_db_cubit.dart';
 import 'package:background_location_sender/location_service/model/location_address_with_latlong.dart';
 import 'package:background_location_sender/location_service/repository/location_service_repository.dart';
 
@@ -40,7 +39,6 @@ class LocationControllerCubit extends Cubit<LocationControllerState> {
   Future<void> onLocationChanged({
     required double latitude,
     required double longitude,
-    required UpdateLocationOnDbCubit updateLocationOnDbCubit,
   }) async {
     try {
       emit(LoadingLocation());
@@ -51,11 +49,6 @@ class LocationControllerCubit extends Cubit<LocationControllerState> {
           longitude: longitude,
         ),
       ));
-
-      // updateLocationOnDbCubit.updateLocation(
-      //   longitude: longitude,
-      //   latitude: latitude,
-      // );
     } catch (e) {
       Fluttertoast.showToast(msg: e.toString());
       emit(LocationError(error: e.toString()));

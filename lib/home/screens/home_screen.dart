@@ -2,10 +2,10 @@
 import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:background_location_sender/background_service.dart';
 import 'package:background_location_sender/firebase_messaging_service/service/firebase_message_service.dart';
-import 'package:background_location_sender/home/logic/cubit/update_location_on_db_cubit.dart';
 import 'package:background_location_sender/location_service/logic/location_controller/location_controller_cubit.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -25,18 +25,17 @@ class _HomeScreenState extends State<HomeScreen> {
     FirebaseMessageService().generateFirebaseMessageToken();
     await BackgroundService().initializeService();
     final permission = await Geolocator.checkPermission();
-
     if (permission == LocationPermission.always) {
-      Geolocator.getPositionStream().listen((Position currentLocation) async {
-        if (await BackgroundService().instance.isRunning()) {
-          await context.read<LocationControllerCubit>().onLocationChanged(
-                updateLocationOnDbCubit:
-                    context.read<UpdateLocationOnDbCubit>(),
-                longitude: currentLocation.longitude,
-                latitude: currentLocation.latitude,
-              );
-        }
-      });
+      Geolocator.getPositionStream().listen(
+        (Position currentLocation) async {
+          if (await BackgroundService().instance.isRunning()) {
+            await context.read<LocationControllerCubit>().onLocationChanged(
+                  longitude: currentLocation.longitude,
+                  latitude: currentLocation.latitude,
+                );
+          }
+        },
+      );
     } else if (permission == LocationPermission.denied) {
       context.read<LocationControllerCubit>().locationFetchByDeviceGPS();
     }
