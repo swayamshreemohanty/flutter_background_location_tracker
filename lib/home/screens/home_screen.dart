@@ -1,4 +1,4 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
+// ignore_for_file: public_member_api_docs, sort_constructors_first, use_build_context_synchronously
 import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -7,8 +7,7 @@ import 'package:background_location_sender/background_service.dart';
 import 'package:background_location_sender/firebase_messaging_service/service/firebase_message_service.dart';
 import 'package:background_location_sender/home/logic/cubit/update_location_on_db_cubit.dart';
 import 'package:background_location_sender/location_service/logic/location_controller/location_controller_cubit.dart';
-import 'package:location/location.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:geolocator/geolocator.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -21,34 +20,31 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late BackgroundService backgroundService;
-  bool stopUpdateScreen = true;
 
   @pragma('vm:entry-point')
   @override
   Future<void> didChangeDependencies() async {
-   
+    backgroundService = BackgroundService();
     FirebaseMessageService().generateFirebaseMessageToken();
-
-    backgroundService = BackgroundService(
-      notificationChannelId: 'my_foreground',
-      initialNotificationTitle: 'AWESOME SERVICE',
-      initialNotificationContent: 'Initializing',
-      foregroundServiceNotificationId: 888,
-
-      // notificationChannel: notificationChannel,
-    );
     await backgroundService.initializeService();
-    backgroundService.stopService();
+    final permission = await Geolocator.checkPermission();
 
-    Location location = Location();
-    location.onLocationChanged.listen((LocationData currentLocation) {
-      context.read<LocationControllerCubit>().onLocationChanged(
-            stopUpdateScreen: stopUpdateScreen,
-            updateLocationOnDbCubit: context.read<UpdateLocationOnDbCubit>(),
-            longitude: currentLocation.longitude ?? 0,
-            latitude: currentLocation.latitude ?? 0,
-          );
-    });
+    if (permission == LocationPermission.always &&
+        await backgroundService.instance.isRunning()) {
+      Geolocator.getPositionStream().listen(
+        (Position currentLocation) async {
+          await context.read<LocationControllerCubit>().onLocationChanged(
+                updateLocationOnDbCubit:
+                    context.read<UpdateLocationOnDbCubit>(),
+                longitude: currentLocation.longitude,
+                latitude: currentLocation.latitude,
+              );
+        },
+      );
+    } else if (permission == LocationPermission.denied) {
+      context.read<LocationControllerCubit>().locationFetchByDeviceGPS();
+    }
+
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print('Got a message whilst in the foreground!');
       print('Message data: ${message.data}');
@@ -89,8 +85,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         // ),
                         ElevatedButton(
                           onPressed: () {
-                            stopUpdateScreen = true;
-
                             backgroundService.stopService();
                             context
                                 .read<LocationControllerCubit>()
@@ -106,10 +100,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     "Loading your service...",
                     style: TextStyle(fontSize: 18),
                   );
-                } else if (state is StopLocationFetch) {
+                } else {
                   return ElevatedButton(
                     onPressed: () async {
-                      stopUpdateScreen = false;
                       backgroundService.startService();
                       context
                           .read<LocationControllerCubit>()
@@ -117,8 +110,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                     child: const Text("Start data sending"),
                   );
-                } else {
-                  return const SizedBox.shrink();
                 }
               },
             ),
