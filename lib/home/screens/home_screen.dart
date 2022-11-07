@@ -99,7 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 } else {
                   return ElevatedButton(
                     onPressed: () async {
-                      BackgroundService().startService();
+                      await BackgroundService().startService();
                       context
                           .read<LocationControllerCubit>()
                           .locationFetchByDeviceGPS();

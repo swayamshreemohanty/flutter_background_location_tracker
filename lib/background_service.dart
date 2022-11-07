@@ -123,15 +123,15 @@ class BackgroundService {
         onForeground: onStart,
       ),
     );
+    await flutterBackgroundService.startService();
   }
 
-  void startService() {
-    flutterBackgroundService.startService();
+  Future<void> startService() async {
+    await flutterBackgroundService.startService();
     flutterBackgroundService.invoke("start_service");
   }
 
   void stopService() {
-    print("STOP");
     flutterBackgroundService.invoke("stop_service");
   }
 }
