@@ -2,13 +2,11 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:background_location_sender/home/logic/cubit/update_location_on_db_cubit.dart';
 import 'package:background_location_sender/location_service/model/location_address_with_latlong.dart';
 import 'package:background_location_sender/location_service/repository/location_service_repository.dart';
-import 'package:background_location_sender/notification/notification.dart';
 
 part 'location_controller_state.dart';
 
@@ -36,37 +34,24 @@ class LocationControllerCubit extends Cubit<LocationControllerState> {
 
   Future<void> stopLocationFetch() async {
     emit(LoadingLocation());
-
     emit(StopLocationFetch());
   }
 
   Future<void> onLocationChanged({
-    bool isbackground = false,
-    bool stopUpdateScreen = false,
     required double latitude,
     required double longitude,
     required UpdateLocationOnDbCubit updateLocationOnDbCubit,
   }) async {
     try {
-      if (isbackground) {
-        //////////
-        final localNotification =
-            Notification(FlutterLocalNotificationsPlugin());
-        localNotification.showNotificationWithoutSound(
+      emit(LoadingLocation());
+      emit(LocationFetched(
+        location: LocationAddressWithLatLong(
+          address: "",
           latitude: latitude,
           longitude: longitude,
-        );
-        //////////
-      } else if (!stopUpdateScreen) {
-        emit(LoadingLocation());
-        emit(LocationFetched(
-          location: LocationAddressWithLatLong(
-            address: "",
-            latitude: latitude,
-            longitude: longitude,
-          ),
-        ));
-      }
+        ),
+      ));
+
       // updateLocationOnDbCubit.updateLocation(
       //   longitude: longitude,
       //   latitude: latitude,
