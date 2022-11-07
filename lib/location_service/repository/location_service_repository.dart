@@ -39,10 +39,6 @@ class LocationServiceRepository {
         }
 
         final locationData = await Geolocator.getCurrentPosition();
-        // return await fetchLocationByCoOrdinates(
-        //   latitude: locationData.latitude,
-        //   longitude: locationData.longitude,
-        // );
 
         return LocationAddressWithLatLong(
           address: "",
