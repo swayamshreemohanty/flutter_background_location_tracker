@@ -3,7 +3,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:background_location_sender/location_service/model/location_address_with_latlong.dart';
 import 'package:background_location_sender/location_service/repository/location_service_repository.dart';
 
@@ -17,19 +16,6 @@ class LocationControllerCubit extends Cubit<LocationControllerState> {
   }) : super(StopLocationFetch());
 
   LocationAddressWithLatLong? selectedLocation;
-
-  Future<LocationAddressWithLatLong> _getlocationSetCoOrdinates(
-      {required double latitude, required double longitude}) async {
-    try {
-      return await locationServiceRepository.fetchLocationByCoOrdinates(
-        latitude: latitude,
-        longitude: longitude,
-      );
-    } catch (e) {
-      Fluttertoast.showToast(msg: e.toString());
-      rethrow;
-    }
-  }
 
   Future<void> stopLocationFetch() async {
     emit(LoadingLocation());
@@ -77,41 +63,6 @@ class LocationControllerCubit extends Cubit<LocationControllerState> {
       emit(LocationError(error: e.toString()));
 
       return null;
-    }
-  }
-
-  Future<void> getLocationByAddress({required String selectedAddress}) async {
-    try {
-      Fluttertoast.showToast(msg: "Fetching address...");
-      selectedLocation = await locationServiceRepository.fetchLocationByAddress(
-          selectedAddress: selectedAddress);
-      emit(LocationFetched(location: selectedLocation!));
-    } catch (e) {
-      Fluttertoast.showToast(msg: e.toString());
-      emit(LocationError(error: e.toString()));
-    }
-  }
-
-  Future<void> getLocationByCoOrdinates({
-    required LatLng latLng,
-    bool allowSetLocation = false,
-  }) async {
-    try {
-      Fluttertoast.showToast(msg: "Collecting location details...");
-
-      selectedLocation = await _getlocationSetCoOrdinates(
-        latitude: latLng.latitude,
-        longitude: latLng.longitude,
-      );
-
-      emit(LocationFetched(
-        location: selectedLocation!,
-        allowSetLocation: allowSetLocation,
-      ));
-      return;
-    } catch (e) {
-      Fluttertoast.showToast(msg: e.toString());
-      return;
     }
   }
 }

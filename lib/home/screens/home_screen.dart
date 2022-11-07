@@ -37,6 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       );
     } else if (permission == LocationPermission.denied) {
+      //TODO:Need to check
       context.read<LocationControllerCubit>().locationFetchByDeviceGPS();
     }
 
