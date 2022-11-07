@@ -48,8 +48,6 @@ class LocationControllerCubit extends Cubit<LocationControllerState> {
     required UpdateLocationOnDbCubit updateLocationOnDbCubit,
   }) async {
     try {
-      print("********************");
-      print(stopUpdateScreen);
       if (isbackground) {
         //////////
         final localNotification =
@@ -69,10 +67,10 @@ class LocationControllerCubit extends Cubit<LocationControllerState> {
           ),
         ));
       }
-      updateLocationOnDbCubit.updateLocation(
-        longitude: longitude,
-        latitude: latitude,
-      );
+      // updateLocationOnDbCubit.updateLocation(
+      //   longitude: longitude,
+      //   latitude: latitude,
+      // );
     } catch (e) {
       Fluttertoast.showToast(msg: e.toString());
       emit(LocationError(error: e.toString()));

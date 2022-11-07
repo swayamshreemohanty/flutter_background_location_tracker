@@ -1,15 +1,56 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:async';
+import 'dart:ui';
 import 'package:background_location_sender/firebase_options.dart';
 import 'package:background_location_sender/home/logic/cubit/update_location_on_db_cubit.dart';
 import 'package:background_location_sender/location_service/logic/location_controller/location_controller_cubit.dart';
 import 'package:background_location_sender/location_service/repository/location_service_repository.dart';
+import 'package:background_location_sender/utility/shared_preference/shared_preference.dart';
+import 'package:dio/dio.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'package:flutter_background_service_android/flutter_background_service_android.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:location/location.dart';
+
+Future<Position> _determinePosition() async {
+  bool serviceEnabled;
+  LocationPermission permission;
+
+  // Test if location services are enabled.
+  serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  if (!serviceEnabled) {
+    // Location services are not enabled don't continue
+    // accessing the position and request users of the
+    // App to enable the location services.
+    return Future.error('Location services are disabled.');
+  }
+
+  permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.denied) {
+      // Permissions are denied, next time you could try
+      // requesting permissions again (this is also where
+      // Android's shouldShowRequestPermissionRationale
+      // returned true. According to Android guidelines
+      // your App should show an explanatory UI now.
+      return Future.error('Location permissions are denied');
+    }
+  }
+
+  if (permission == LocationPermission.deniedForever) {
+    // Permissions are denied forever, handle appropriately.
+    return Future.error(
+        'Location permissions are permanently denied, we cannot request permissions.');
+  }
+
+  // When we reach here, permissions are granted and we can
+  // continue accessing the position of the device.
+  return await Geolocator.getCurrentPosition();
+}
 
 @pragma('vm:entry-point')
 void onStart(
@@ -17,15 +58,27 @@ void onStart(
   // LocationControllerCubit locationControllerCubit,
   // UpdateLocationOnDbCubit updateLocationOnDbCubit,
 ) async {
+  DartPluginRegistrant.ensureInitialized();
   // For flutter prior to version 3.0.0
   // We have to register the plugin manually
 
   /// OPTIONAL when use custom notification
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
+
+  double longitude = 0;
+  double latitude = 0;
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // final oldLocation = await Location().getLocation();
+  // print("OLD LOCATION PACKAGE");
+  // print(oldLocation.longitude);
+  // print(oldLocation.latitude);
+  // print("xxxxxxxxxxxxxxxx");
+
   if (service is AndroidServiceInstance) {
     service.on('start_service').listen((event) async {
       await service.setAsForegroundService();
@@ -43,46 +96,48 @@ void onStart(
   service.on("stop_service").listen((event) async {
     await service.stopSelf();
   });
-  double num1 = 0;
-  double num2 = 10;
 
   // bring to foreground
   Timer.periodic(const Duration(seconds: 1), (timer) async {
     if (service is AndroidServiceInstance) {
       if (await service.isForegroundService()) {
-        /// OPTIONAL for use custom notification
-        /// the notification id must be equals with AndroidConfiguration when you call configure() method.
-        flutterLocalNotificationsPlugin.show(
-          888,
-          'COOL SERVICE',
-          'AWESOME COUNTER: $num1, $num2',
-          const NotificationDetails(
-            android: AndroidNotificationDetails(
-              'my_foreground',
-              'AWESOME SERVICE:',
-              icon: 'ic_bg_service_small',
-              ongoing: true,
+        print(
+            "***************await CustomSharedPreference().getData(key: SharedPreferenceKeys.uid********************");
+        print(
+            "+++++++++++++++++++++++${await CustomSharedPreference().getData(key: SharedPreferenceKeys.uid)}");
+
+        final location = await _determinePosition();
+        if (longitude != location.longitude || latitude != location.latitude) {
+          longitude = location.longitude;
+          latitude = location.latitude;
+          await UpdateLocationOnDbCubit().updateLocation(
+            longitude: location.longitude,
+            latitude: location.latitude,
+          );
+          flutterLocalNotificationsPlugin.show(
+            888,
+            'COOL LOCATION SERVICE',
+            'Latitude: ${location.latitude}, Longitude: ${location.longitude}',
+            const NotificationDetails(
+              android: AndroidNotificationDetails(
+                'my_foreground',
+                'AWESOME SERVICE:',
+                icon: 'ic_bg_service_small',
+                ongoing: true,
+              ),
             ),
-          ),
-          payload: "service",
-        );
+            payload: "service",
+          );
+          print("+++++++++BACKGROUND DIO++++++++");
+          await Dio()
+              .post("https://colormoon.in/offos/api//customer/welcome")
+              .then((value) {
+            print("***********RESULTS**************");
+            print(value.data);
+          });
 
-        // final location = await Location().getLocation();
-
-        await UpdateLocationOnDbCubit().updateLocation(
-          longitude: num1,
-          latitude: num2,
-        );
-        print("+++++++++++++++++++++++++++++");
-        print(num1);
-        print(num2);
-        num1 += 1;
-        num2 += 1;
-        // if you don't using custom notification, uncomment this
-        // service.setForegroundNotificationInfo(
-        //   title: "My App Service",
-        //   content: "Updated at ${DateTime.now()}",
-        // );
+      
+        }
       }
     }
   });

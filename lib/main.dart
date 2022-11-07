@@ -9,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:location/location.dart';
 
-const fetchBackground = "fetchBackground";
 final location = Location();
 final locationControllerCubit = LocationControllerCubit(
   locationServiceRepository: LocationServiceRepository(location: location),
@@ -26,7 +25,7 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  
+
   // await location.enableBackgroundMode();
   FirebaseMessaging.onBackgroundMessage(backgroundHandler);
   // We don't need it anymore since it will be executed in background

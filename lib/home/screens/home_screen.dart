@@ -7,6 +7,8 @@ import 'package:background_location_sender/background_service.dart';
 import 'package:background_location_sender/firebase_messaging_service/service/firebase_message_service.dart';
 import 'package:background_location_sender/home/logic/cubit/update_location_on_db_cubit.dart';
 import 'package:background_location_sender/location_service/logic/location_controller/location_controller_cubit.dart';
+import 'package:location/location.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -24,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @pragma('vm:entry-point')
   @override
   Future<void> didChangeDependencies() async {
+   
     FirebaseMessageService().generateFirebaseMessageToken();
 
     backgroundService = BackgroundService(
@@ -37,19 +40,15 @@ class _HomeScreenState extends State<HomeScreen> {
     await backgroundService.initializeService();
     backgroundService.stopService();
 
-    // Location location = Location();
-    // location.onLocationChanged.listen((LocationData currentLocation) {
-    //   print("***********");
-    //   print(currentLocation.longitude);
-    //   print(currentLocation.latitude);
-    //   print(stopUpdateScreen);
-    //   context.read<LocationControllerCubit>().onLocationChanged(
-    //         stopUpdateScreen: stopUpdateScreen,
-    //         updateLocationOnDbCubit: context.read<UpdateLocationOnDbCubit>(),
-    //         longitude: currentLocation.longitude ?? 0,
-    //         latitude: currentLocation.latitude ?? 0,
-    //       );
-    // });
+    Location location = Location();
+    location.onLocationChanged.listen((LocationData currentLocation) {
+      context.read<LocationControllerCubit>().onLocationChanged(
+            stopUpdateScreen: stopUpdateScreen,
+            updateLocationOnDbCubit: context.read<UpdateLocationOnDbCubit>(),
+            longitude: currentLocation.longitude ?? 0,
+            latitude: currentLocation.latitude ?? 0,
+          );
+    });
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print('Got a message whilst in the foreground!');
       print('Message data: ${message.data}');
