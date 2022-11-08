@@ -1,5 +1,6 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:background_location_sender/home/model/update_location_model.dart';
+import 'package:background_location_sender/utility/shared_preference/shared_preference.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UpdateLocationRepository {
@@ -12,14 +13,17 @@ class UpdateLocationRepository {
     required double latitude,
   }) async {
     try {
-     
       final docRef = _firebaseFirestore.collection("user").doc(uid);
       final newLocation = UpdateLocation(
         longitude: longitude,
         latitude: latitude,
         lastUpdateTime: DateTime.now(),
       );
+      final userName = await CustomSharedPreference()
+          .getData(key: SharedPreferenceKeys.userName);
+
       final data = ({
+        "user": userName,
         "location": newLocation.toMap(),
       });
       return await docRef.update(data);
