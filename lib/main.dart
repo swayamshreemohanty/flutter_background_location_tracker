@@ -47,7 +47,7 @@ class MyApp extends StatelessWidget {
         BlocProvider.value(value: locationControllerCubit),
       ],
       child: MaterialApp(
-        title: 'BG location sender',
+        title: 'Track Your Location',
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),
