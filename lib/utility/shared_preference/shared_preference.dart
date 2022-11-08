@@ -2,7 +2,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 enum SharedPreferenceKeys {
   notificationToken("notificationToken"),
-  uid("uid");
+  uid("uid"),
+  userName("user_name");
 
   final String value;
   const SharedPreferenceKeys(this.value);
