@@ -29,6 +29,8 @@ class FirebaseMessageService {
       } else {
         throw ("Unable to register device");
       }
+
+      return;
     } catch (e) {
       Fluttertoast.showToast(msg: e.toString());
     }

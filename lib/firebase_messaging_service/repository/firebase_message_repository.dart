@@ -18,12 +18,12 @@ class FirebaseMessageRepository {
         uid = docRef.id;
         await sharedpref.storeData(key: SharedPreferenceKeys.uid, data: uid);
       }
+      
       final data = ({
         "uid": uid,
         "push_notification_key": deviceToken,
         "device_type": Platform.isAndroid ? "android" : "ios",
       });
-
       return await _firebaseFirestore.collection("user").doc(uid).set(data);
     } catch (e) {
       rethrow;
