@@ -18,7 +18,9 @@ class FirebaseMessageService {
       } else {
         deviceToken = await firebaseMessaging.getToken() ?? "";
         await sharedpref.storeData(
-            key: SharedPreferenceKeys.notificationToken, data: deviceToken);
+          key: SharedPreferenceKeys.notificationToken,
+          data: deviceToken,
+        );
       }
 
       if (deviceToken.isNotEmpty) {
