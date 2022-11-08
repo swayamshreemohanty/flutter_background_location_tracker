@@ -29,6 +29,13 @@
             {
               "client_id": "218641175293-v3uq0o8q8ct9maar6k3umhgvj6dds6uf.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "218641175293-2hlcthlvd7afklji46qjeqpuc6moqbsv.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.backgroundLocationSender"
+              }
             }
           ]
         }
