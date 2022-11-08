@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:geolocator/geolocator.dart';
 
 part 'update_location_on_db_state.dart';
 
@@ -13,8 +14,7 @@ class UpdateLocationOnDbCubit extends Cubit<UpdateLocationOnDbState> {
   FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
 
   Future<void> updateLocation({
-    required double longitude,
-    required double latitude,
+    required Position position,
   }) async {
     try {
       final deviceToken = await firebaseMessaging.getToken();
@@ -27,8 +27,7 @@ class UpdateLocationOnDbCubit extends Cubit<UpdateLocationOnDbState> {
         await UpdateLocationRepository().updateLocationOnDB(
           deviceToken: deviceToken,
           uid: uid,
-          longitude: longitude,
-          latitude: latitude,
+          position: position,
         );
       }
     } catch (e) {
