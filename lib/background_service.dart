@@ -54,13 +54,13 @@ void onStart(ServiceInstance service) async {
                   .getData(key: SharedPreferenceKeys.userName) ??
               "User";
           Geolocator.getPositionStream().listen((Position position) async {
-            await UpdateLocationOnDbCubit().updateLocation(
+            UpdateLocationOnDbCubit().updateLocation(
               position: position,
             );
 
             await NotificationService().showNotification(
               showNotificationId: foregroundServiceNotificationId,
-              title: "Hii, $username.",
+              title: "Hii, $username",
               body:
                   'Your Latitude: ${position.latitude}, Longitude: ${position.longitude}',
               payload: "service",

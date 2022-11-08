@@ -26,8 +26,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @pragma('vm:entry-point')
   @override
   Future<void> didChangeDependencies() async {
-    await FirebaseMessageService().generateFirebaseMessageToken();
     await BackgroundService().initializeService();
+    FirebaseMessageService().generateFirebaseMessageToken();
 
     final userName = await CustomSharedPreference()
         .getData(key: SharedPreferenceKeys.userName);
