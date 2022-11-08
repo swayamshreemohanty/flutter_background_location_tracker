@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:background_location_sender/firebase_options.dart';
 import 'package:background_location_sender/home/logic/cubit/update_location_on_db_cubit.dart';
 import 'package:background_location_sender/notification/notification.dart';
+import 'package:background_location_sender/utility/shared_preference/shared_preference.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -12,7 +13,7 @@ import 'package:flutter_background_service_android/flutter_background_service_an
 
 const String notificationChannelId = "foreground_service";
 const int foregroundServiceNotificationId = 888;
-const String initialNotificationTitle = "LOCATION SERVICE";
+const String initialNotificationTitle = "TRACK YOUR LOCATION";
 const String initialNotificationContent = "Initializing";
 
 @pragma('vm:entry-point')
@@ -49,16 +50,19 @@ void onStart(ServiceInstance service) async {
       if (await service.isForegroundService()) {
         final permission = await Geolocator.checkPermission();
         if (permission == LocationPermission.always) {
+          final username = await CustomSharedPreference()
+                  .getData(key: SharedPreferenceKeys.userName) ??
+              "User";
           Geolocator.getPositionStream().listen((Position position) async {
-            UpdateLocationOnDbCubit().updateLocation(
-              longitude: position.longitude,
-              latitude: position.latitude,
+            await UpdateLocationOnDbCubit().updateLocation(
+              position: position,
             );
+
             await NotificationService().showNotification(
               showNotificationId: foregroundServiceNotificationId,
-              title: 'COOL LOCATION SERVICE',
+              title: "Hii, $username.",
               body:
-                  'Latitude: ${position.latitude}, Longitude: ${position.longitude}',
+                  'Your Latitude: ${position.latitude}, Longitude: ${position.longitude}',
               payload: "service",
               androidNotificationDetails: const AndroidNotificationDetails(
                 notificationChannelId,
