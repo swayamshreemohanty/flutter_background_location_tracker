@@ -13,14 +13,12 @@ class LoadingLocation extends LocationControllerState {}
 class StopLocationFetch extends LocationControllerState {}
 
 class LocationFetched extends LocationControllerState {
-  final bool allowSetLocation;
-  final LocationAddressWithLatLong location;
+  final Position location;
   const LocationFetched({
-    this.allowSetLocation = false,
     required this.location,
   });
   @override
-  List<Object> get props => [location, allowSetLocation];
+  List<Object> get props => [location];
 }
 
 class LocationError extends LocationControllerState {

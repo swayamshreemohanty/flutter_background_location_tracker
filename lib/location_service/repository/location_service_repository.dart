@@ -2,12 +2,11 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:geolocator/geolocator.dart';
-import 'package:background_location_sender/location_service/model/location_address_with_latlong.dart';
 
 class LocationServiceRepository {
   LocationServiceRepository();
 
-  Future<LocationAddressWithLatLong> fetchLocationByDeviceGPS() async {
+  Future<Position> fetchLocationByDeviceGPS() async {
     try {
       bool serviceEnabled;
       LocationPermission permission;
@@ -38,13 +37,7 @@ class LocationServiceRepository {
           throw ('Set the location permissions to Always.');
         }
 
-        final locationData = await Geolocator.getCurrentPosition();
-
-        return LocationAddressWithLatLong(
-          address: "",
-          latitude: locationData.latitude,
-          longitude: locationData.longitude,
-        );
+        return await Geolocator.getCurrentPosition();
       }
     } catch (e) {
       rethrow;
