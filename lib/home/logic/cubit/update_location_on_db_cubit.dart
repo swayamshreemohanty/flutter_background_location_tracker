@@ -1,4 +1,3 @@
-import 'package:background_location_sender/home/repository/update_location_repository.dart';
 import 'package:background_location_sender/utility/shared_preference/shared_preference.dart';
 import 'package:equatable/equatable.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -24,11 +23,12 @@ class UpdateLocationOnDbCubit extends Cubit<UpdateLocationOnDbState> {
         Fluttertoast.showToast(msg: "Unable to update location on db");
         return;
       } else {
-        await UpdateLocationRepository().updateLocationOnDB(
-          deviceToken: deviceToken,
-          uid: uid,
-          position: position,
-        );
+        // TODO: disbaled to avoid firebase upload
+        // await UpdateLocationRepository().updateLocationOnDB(
+        //   deviceToken: deviceToken,
+        //   uid: uid,
+        //   position: position,
+        // );
       }
     } catch (e) {
       Fluttertoast.showToast(msg: e.toString());
