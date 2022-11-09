@@ -1,14 +1,35 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-class NotificationService {
-  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
-  Future initialize() async {
-    FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-        FlutterLocalNotificationsPlugin();
+import 'package:background_location_sender/utility/show_snak_bar.dart';
 
+class NotificationService {
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+
+  NotificationService(
+    this.flutterLocalNotificationsPlugin,
+  );
+
+  Future<void> createChannel(
+      AndroidNotificationChannel notificationChannel) async {
+    return await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(notificationChannel);
+  }
+
+  void onDidReceiveNotificationResponse(NotificationResponse details) {
+    print("*******************RECEIVED 1********************");
+  }
+
+  void onDidReceiveBackgroundNotificationResponse(
+      NotificationResponse details) {
+    print("*******************RECEIVED 2********************");
+  }
+
+  Future initialize(BuildContext context) async {
     AndroidInitializationSettings androidInitializationSettings =
         const AndroidInitializationSettings(
             "@mipmap/ic_launcher"); //'@mipmap/ic_launcher'
@@ -29,10 +50,11 @@ class NotificationService {
     int showNotificationId = 0,
     required AndroidNotificationDetails androidNotificationDetails,
     //
-    required String title,
-    required String body,
-    required String? payload,
+    String? title,
+    String? body,
+    String? payload,
   }) async {
+    //Demo
     //  var androidPlatformChannelSpecifics = AndroidNotificationDetails(
     //   channelId,
     //   channelName,
@@ -45,7 +67,7 @@ class NotificationService {
     var platformChannelSpecifics =
         NotificationDetails(android: androidNotificationDetails);
 
-    await _flutterLocalNotificationsPlugin.show(
+    await flutterLocalNotificationsPlugin.show(
       showNotificationId,
       title,
       body,
