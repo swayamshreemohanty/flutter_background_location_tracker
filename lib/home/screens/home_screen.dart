@@ -1,6 +1,7 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first, use_build_context_synchronously
 import 'dart:async';
 import 'package:background_location_sender/home/widgets/custom_text_form_field.dart';
+import 'package:background_location_sender/notification/notification.dart';
 import 'package:background_location_sender/utility/shared_preference/shared_preference.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:background_location_sender/background_service.dart';
 import 'package:background_location_sender/firebase_messaging_service/service/firebase_message_service.dart';
 import 'package:background_location_sender/location_service/logic/location_controller/location_controller_cubit.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -23,11 +26,41 @@ class _HomeScreenState extends State<HomeScreen> {
   final userNameTextController = TextEditingController();
   GlobalKey<FormState> formkey = GlobalKey<FormState>();
 
+  @override
+  void initState() {
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print('Just received a notification when app is opened');
+      Fluttertoast.showToast(
+          msg: 'Just received a notification when app is opened');
+      context.read<NotificationService>().showNotification(
+            androidNotificationDetails:
+                const AndroidNotificationDetails("firebase", "firebase"),
+            title: "Opened by user ${message.notification?.title}",
+            body: message.notification?.body ?? "You received a notification",
+            payload: message.notification?.bodyLocKey ?? "service",
+          );
+      // showNotification(message, context);
+      if (message.notification != null) {
+        //"route" will be your root parameter you sending from firebase
+        final routeFromNotification = message.data["route"];
+        if (routeFromNotification != null) {
+          if (routeFromNotification == "profile") {
+            print("Navigator.of(context).pushNamed('profile')");
+          }
+        } else {
+          print('could not find the route');
+        }
+      }
+    });
+    super.initState();
+  }
+
   @pragma('vm:entry-point')
   @override
   Future<void> didChangeDependencies() async {
     await BackgroundService().initializeService();
-    FirebaseMessageService().generateFirebaseMessageToken();
+    await context.read<NotificationService>().initialize(context);
+    await FirebaseMessageService().generateFirebaseMessageToken();
 
     final userName = await CustomSharedPreference()
         .getData(key: SharedPreferenceKeys.userName);
@@ -128,6 +161,23 @@ class _HomeScreenState extends State<HomeScreen> {
                               .stopLocationFetch();
                         },
                         child: const Text("Stop sending"),
+                      ),
+                      const SizedBox(height: 8),
+                      ElevatedButton(
+                        onPressed: () async {
+                          context.read<NotificationService>().showNotification(
+                                androidNotificationDetails:
+                                    const AndroidNotificationDetails(
+                                  "route",
+                                  "route",
+                                ),
+                                title: "Navigation",
+                                body:
+                                    "Click here to open application and navigate to new screen.",
+                                payload: "service",
+                              );
+                        },
+                        child: const Text("show notification"),
                       ),
                     ],
                   ),
