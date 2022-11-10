@@ -1,5 +1,6 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first, use_build_context_synchronously
 import 'dart:async';
+import 'package:background_location_sender/home/screens/order_screen.dart';
 import 'package:background_location_sender/home/screens/ring_screen.dart';
 import 'package:background_location_sender/home/widgets/custom_text_form_field.dart';
 import 'package:background_location_sender/notification/notification.dart';
@@ -71,6 +72,12 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ));
           }
+        } else if (routeFromNotification == "order_screen") {
+          Navigator.push(context, MaterialPageRoute(
+            builder: (context) {
+              return OrderScreen(payload: message.data["payload"]);
+            },
+          ));
         } else {
           print('could not find the route');
         }
@@ -92,6 +99,12 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ));
           }
+        } else if (routeFromNotification == "order_screen") {
+          Navigator.push(context, MaterialPageRoute(
+            builder: (context) {
+              return OrderScreen(payload: message.data["payload"]);
+            },
+          ));
         } else {
           print('could not find the route');
         }
@@ -109,6 +122,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
     await context.read<NotificationService>().initialize(context);
     await FirebaseMessageService().generateFirebaseMessageToken();
+    final lastNotification =
+        await FirebaseMessaging.instance.getInitialMessage();
+
+    if (lastNotification != null) {
+      if (lastNotification.data["route"] == "service_screen") {
+        Navigator.push(context, MaterialPageRoute(
+          builder: (context) {
+            return RingScreen(payload: lastNotification.data["payload"]);
+          },
+        ));
+      } else if (lastNotification.data["route"] == "order_screen") {
+        Navigator.push(context, MaterialPageRoute(
+          builder: (context) {
+            return OrderScreen(payload: lastNotification.data["payload"]);
+          },
+        ));
+      }
+    }
 
     final userName = await CustomSharedPreference()
         .getData(key: SharedPreferenceKeys.userName);
