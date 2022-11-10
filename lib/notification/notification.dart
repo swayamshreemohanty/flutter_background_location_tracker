@@ -3,8 +3,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-import 'package:background_location_sender/utility/show_snak_bar.dart';
-
 class NotificationService {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 
@@ -20,13 +18,13 @@ class NotificationService {
         ?.createNotificationChannel(notificationChannel);
   }
 
-  void onDidReceiveNotificationResponse(NotificationResponse details) {
-    print("*******************RECEIVED 1********************");
+  void foregroundNotificationTap(NotificationResponse details) {
+    print("*******************LOCAL FOREGROUND RECEIVED 1********************");
   }
 
-  void onDidReceiveBackgroundNotificationResponse(
-      NotificationResponse details) {
-    print("*******************RECEIVED 2********************");
+  @pragma('vm:entry-point')
+  static void backgroundNotificationTap(NotificationResponse details) {
+    print("*******************LOCAL BACKGROUND RECEIVED 2********************");
   }
 
   Future initialize(BuildContext context) async {
@@ -43,7 +41,11 @@ class NotificationService {
       iOS: darwinInitializationSettings,
     );
 
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+    await flutterLocalNotificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: foregroundNotificationTap,
+      onDidReceiveBackgroundNotificationResponse: backgroundNotificationTap,
+    );
   }
 
   Future showNotification({
