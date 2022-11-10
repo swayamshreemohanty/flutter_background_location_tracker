@@ -71,13 +71,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 return RingScreen(payload: message.data["payload"]);
               },
             ));
+          } else if (routeFromNotification == "order_screen") {
+            Navigator.push(context, MaterialPageRoute(
+              builder: (context) {
+                return OrderScreen(payload: message.data["payload"]);
+              },
+            ));
           }
-        } else if (routeFromNotification == "order_screen") {
-          Navigator.push(context, MaterialPageRoute(
-            builder: (context) {
-              return OrderScreen(payload: message.data["payload"]);
-            },
-          ));
         } else {
           print('could not find the route');
         }
@@ -98,13 +98,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 return RingScreen(payload: message.data["payload"]);
               },
             ));
+          } else if (routeFromNotification == "order_screen") {
+            Navigator.push(context, MaterialPageRoute(
+              builder: (context) {
+                return OrderScreen(payload: message.data["payload"]);
+              },
+            ));
           }
-        } else if (routeFromNotification == "order_screen") {
-          Navigator.push(context, MaterialPageRoute(
-            builder: (context) {
-              return OrderScreen(payload: message.data["payload"]);
-            },
-          ));
         } else {
           print('could not find the route');
         }
