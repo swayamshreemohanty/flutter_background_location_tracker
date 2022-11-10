@@ -21,12 +21,18 @@ final notificationService =
 late AndroidNotificationChannel channel;
 
 Future<void> setupFlutterNotifications() async {
+  await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
   channel = const AndroidNotificationChannel(
-    'high_importance_channel', // id
-    'High Importance Notifications', // title
+    'background_high_importance_channel', // id
+    'High Importance Bckground Notifications', // title
     description:
-        'This channel is used for important notifications.', // description
+        'This channel is used for background notifications.', // description
     importance: Importance.high,
+    sound: RawResourceAndroidNotificationSound("bellsound"),
   );
 
   /// Create an Android Notification Channel.
@@ -37,11 +43,6 @@ Future<void> setupFlutterNotifications() async {
 
   /// Update the iOS foreground notification presentation options to allow
   /// heads up notifications.
-  await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-    alert: true,
-    badge: true,
-    sound: true,
-  );
 }
 
 void showFlutterNotification(RemoteMessage message) {
@@ -53,13 +54,15 @@ void showFlutterNotification(RemoteMessage message) {
         channel.id,
         channel.name,
         channelDescription: channel.description,
+        sound: const RawResourceAndroidNotificationSound("bellsound"),
+
         // TODO add a proper drawable resource to android, for now using
         //      one that already exists in example app.
         // icon: 'launch_background',
       ),
       showNotificationId: notification.hashCode,
-      title: "Local test ${notification.title}",
-      body: "Local test ${notification.body}",
+      title: "(Background) ${notification.title}",
+      body: "(Background) ${notification.body}",
       payload: "service",
     );
   }
@@ -72,7 +75,8 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   showFlutterNotification(message);
   // If you're going to use other Firebase services in the background, such as Firestore,
   // make sure you call `initializeApp` before using other Firebase services.
-  print('Handling a background message ${message.messageId}');
+  print(
+      '***************Handling a background message ${message.messageId}***********');
 }
 
 Future<void> main() async {
@@ -81,6 +85,7 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  await FirebaseMessaging.instance.getInitialMessage();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   // We don't need it anymore since it will be executed in background
 
