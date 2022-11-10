@@ -1,5 +1,6 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first, use_build_context_synchronously
 import 'dart:async';
+import 'package:background_location_sender/home/screens/ring_screen.dart';
 import 'package:background_location_sender/home/widgets/custom_text_form_field.dart';
 import 'package:background_location_sender/notification/notification.dart';
 import 'package:background_location_sender/utility/shared_preference/shared_preference.dart';
@@ -26,32 +27,77 @@ class _HomeScreenState extends State<HomeScreen> {
   final userNameTextController = TextEditingController();
   GlobalKey<FormState> formkey = GlobalKey<FormState>();
 
+  Future<void> requestNotificationPermission() async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+    NotificationSettings settings = await messaging.requestPermission();
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      Fluttertoast.showToast(msg: "User granted permission");
+    } else if (settings.authorizationStatus ==
+        AuthorizationStatus.provisional) {
+      Fluttertoast.showToast(msg: "User granted provisional permission");
+    } else {
+      Fluttertoast.showToast(msg: "User declined or has not accept permission");
+    }
+  }
+
   @override
   void initState() {
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('Just received a notification when app is opened');
-      Fluttertoast.showToast(
-          msg: 'Just received a notification when app is opened');
-      context.read<NotificationService>().showNotification(
-            androidNotificationDetails:
-                const AndroidNotificationDetails("firebase", "firebase"),
-            title: "Opened by user ${message.notification?.title}",
-            body: message.notification?.body ?? "You received a notification",
-            payload: message.notification?.bodyLocKey ?? "service",
-          );
-      // showNotification(message, context);
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+      print('***********Got a message whilst in the foreground!************');
+      print('Message data: ${message.data}');
       if (message.notification != null) {
-        //"route" will be your root parameter you sending from firebase
-        final routeFromNotification = message.data["route"];
-        if (routeFromNotification != null) {
-          if (routeFromNotification == "profile") {
-            print("Navigator.of(context).pushNamed('profile')");
+        print('Message also contained a notification: ${message.notification}');
+        // await context.read<NotificationService>().showNotification(
+        //       androidNotificationDetails: const AndroidNotificationDetails(
+        //         "firebase",
+        //         "firebase",
+        //         importance: Importance.high,
+        //         playSound: true,
+        //       ),
+        //       showNotificationId: 128,
+        //       title: "(Foreground) ${message.notification?.title}",
+        //       body: message.notification?.body ?? "You received a notification",
+        //       payload: message.data['body'] ?? "service",
+        //     );
+        final String routeFromNotification = message.data["route"];
+
+        if (routeFromNotification.isNotEmpty) {
+          if (routeFromNotification == "service_screen") {
+            Navigator.push(context, MaterialPageRoute(
+              builder: (context) {
+                return RingScreen(payload: message.data["payload"]);
+              },
+            ));
           }
         } else {
           print('could not find the route');
         }
       }
     });
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
+      Fluttertoast.showToast(
+        msg: 'Just received a notification when app is opened',
+      );
+
+      // showNotification(message, context);
+      if (message.notification != null) {
+        final String routeFromNotification = message.data["route"];
+        if (routeFromNotification.isNotEmpty) {
+          if (routeFromNotification == "service_screen") {
+            Navigator.push(context, MaterialPageRoute(
+              builder: (context) {
+                return RingScreen(payload: message.data["payload"]);
+              },
+            ));
+          }
+        } else {
+          print('could not find the route');
+        }
+      }
+    });
+
     super.initState();
   }
 
@@ -59,6 +105,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Future<void> didChangeDependencies() async {
     await BackgroundService().initializeService();
+    await requestNotificationPermission();
+
     await context.read<NotificationService>().initialize(context);
     await FirebaseMessageService().generateFirebaseMessageToken();
 
@@ -84,14 +132,12 @@ class _HomeScreenState extends State<HomeScreen> {
       context.read<LocationControllerCubit>().locationFetchByDeviceGPS();
     }
 
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('Got a message whilst in the foreground!');
-      print('Message data: ${message.data}');
-      if (message.notification != null) {
-        print('Message also contained a notification: ${message.notification}');
-      }
-    });
-
+    print("************************************");
+    print("************************************");
+    print(
+        await CustomSharedPreference().getData(key: SharedPreferenceKeys.uid));
+    print(await CustomSharedPreference()
+        .getData(key: SharedPreferenceKeys.notificationToken));
     super.didChangeDependencies();
   }
 
