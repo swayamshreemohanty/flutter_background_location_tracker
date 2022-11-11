@@ -46,10 +46,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-      print('***********Got a message whilst in the foreground!************');
-      print('Message data: ${message.data}');
+      // print('***********Got a message whilst in the foreground!************');
+      // print('Message data: ${message.data}');
       if (message.notification != null) {
-        print('Message also contained a notification: ${message.notification}');
+        // print('Message also contained a notification: ${message.notification}');
         // await context.read<NotificationService>().showNotification(
         //       androidNotificationDetails: const AndroidNotificationDetails(
         //         "firebase",
@@ -60,21 +60,21 @@ class _HomeScreenState extends State<HomeScreen> {
         //       showNotificationId: 128,
         //       title: "(Foreground) ${message.notification?.title}",
         //       body: message.notification?.body ?? "You received a notification",
-        //       payload: message.data['body'] ?? "service",
+        //       payload: message.data['body'].toString() ?? "service",
         //     );
-        final String routeFromNotification = message.data["route"];
+        final String routeFromNotification = message.data["route"].toString();
 
         if (routeFromNotification.isNotEmpty) {
           if (routeFromNotification == "service_screen") {
             Navigator.push(context, MaterialPageRoute(
               builder: (context) {
-                return RingScreen(payload: message.data["payload"]);
+                return RingScreen(payload: message.data["payload"].toString());
               },
             ));
           } else if (routeFromNotification == "order_screen") {
             Navigator.push(context, MaterialPageRoute(
               builder: (context) {
-                return OrderScreen(payload: message.data["payload"]);
+                return OrderScreen(payload: message.data["payload"].toString());
               },
             ));
           }
@@ -90,18 +90,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
       // showNotification(message, context);
       if (message.notification != null) {
-        final String routeFromNotification = message.data["route"];
+        final String routeFromNotification = message.data["route"].toString();
         if (routeFromNotification.isNotEmpty) {
           if (routeFromNotification == "service_screen") {
             Navigator.push(context, MaterialPageRoute(
               builder: (context) {
-                return RingScreen(payload: message.data["payload"]);
+                return RingScreen(payload: message.data["payload"].toString());
               },
             ));
           } else if (routeFromNotification == "order_screen") {
             Navigator.push(context, MaterialPageRoute(
               builder: (context) {
-                return OrderScreen(payload: message.data["payload"]);
+                return OrderScreen(payload: message.data["payload"].toString());
               },
             ));
           }
@@ -126,16 +126,18 @@ class _HomeScreenState extends State<HomeScreen> {
         await FirebaseMessaging.instance.getInitialMessage();
 
     if (lastNotification != null) {
-      if (lastNotification.data["route"] == "service_screen") {
+      if (lastNotification.data["route"].toString() == "service_screen") {
         Navigator.push(context, MaterialPageRoute(
           builder: (context) {
-            return RingScreen(payload: lastNotification.data["payload"]);
+            return RingScreen(
+                payload: lastNotification.data["payload"].toString());
           },
         ));
-      } else if (lastNotification.data["route"] == "order_screen") {
+      } else if (lastNotification.data["route"].toString() == "order_screen") {
         Navigator.push(context, MaterialPageRoute(
           builder: (context) {
-            return OrderScreen(payload: lastNotification.data["payload"]);
+            return OrderScreen(
+                payload: lastNotification.data["payload"].toString());
           },
         ));
       }
@@ -150,25 +152,34 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.always) {
-      Geolocator.getPositionStream().listen(
-        (Position currentLocation) async {
-          if (await BackgroundService().instance.isRunning()) {
-            await context
-                .read<LocationControllerCubit>()
-                .onLocationChanged(location: currentLocation);
-          }
-        },
-      );
+      BackgroundService()
+          .instance
+          .on('on_location_changed')
+          .listen((event) async {
+        if (event != null) {
+          final position = Position(
+            longitude: double.tryParse(event['longitude'].toString()) ?? 0.0,
+            latitude: double.tryParse(event['latitude'].toString()) ?? 0.0,
+            timestamp: DateTime.fromMillisecondsSinceEpoch(
+                event['timestamp'].toInt(),
+                isUtc: true),
+            accuracy: double.tryParse(event['accuracy'].toString()) ?? 0.0,
+            altitude: double.tryParse(event['altitude'].toString()) ?? 0.0,
+            heading: double.tryParse(event['heading'].toString()) ?? 0.0,
+            speed: double.tryParse(event['speed'].toString()) ?? 0.0,
+            speedAccuracy:
+                double.tryParse(event['speed_accuracy'].toString()) ?? 0.0,
+          );
+
+          await context
+              .read<LocationControllerCubit>()
+              .onLocationChanged(location: position);
+        }
+      });
     } else if (permission == LocationPermission.denied) {
-      context.read<LocationControllerCubit>().locationFetchByDeviceGPS();
+      context.read<LocationControllerCubit>().enableGPSWithPermission();
     }
 
-    print("************************************");
-    print("************************************");
-    print(
-        await CustomSharedPreference().getData(key: SharedPreferenceKeys.uid));
-    print(await CustomSharedPreference()
-        .getData(key: SharedPreferenceKeys.notificationToken));
     super.didChangeDependencies();
   }
 
