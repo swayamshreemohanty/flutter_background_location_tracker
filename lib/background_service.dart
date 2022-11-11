@@ -54,7 +54,8 @@ void onStart(ServiceInstance service) async {
                   .getData(key: SharedPreferenceKeys.userName) ??
               "User";
           Geolocator.getPositionStream().listen((Position position) async {
-            UpdateLocationOnDbCubit().updateLocation(
+            service.invoke('on_location_changed', position.toJson());
+            await UpdateLocationOnDbCubit().updateLocation(
               position: position,
             );
 
@@ -125,7 +126,7 @@ class BackgroundService {
         onForeground: onStart,
       ),
     );
-    await flutterBackgroundService.startService();
+    // await flutterBackgroundService.startService();
   }
 
   Future<void> startService() async {
