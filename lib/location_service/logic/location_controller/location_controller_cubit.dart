@@ -35,31 +35,24 @@ class LocationControllerCubit extends Cubit<LocationControllerState> {
   Future<Position?> locationFetchByDeviceGPS() async {
     try {
       emit(LoadingLocation());
-
-      Fluttertoast.showToast(msg: "Fetching address...");
       final selectedLocation =
           await locationServiceRepository.fetchLocationByDeviceGPS();
-
       emit(LocationFetched(location: selectedLocation));
-
       return selectedLocation;
     } catch (e) {
       Fluttertoast.showToast(msg: e.toString());
-
       emit(LocationError(error: e.toString()));
-
       return null;
     }
   }
 
-  Future<void> enableGPSWithPermission() async {
+  Future<bool> enableGPSWithPermission() async {
     try {
-      Fluttertoast.showToast(msg: "Fetching address...");
       await locationServiceRepository.fetchLocationByDeviceGPS();
-      return;
+      return true;
     } catch (e) {
       Fluttertoast.showToast(msg: e.toString());
-      return;
+      return false;
     }
   }
 }
