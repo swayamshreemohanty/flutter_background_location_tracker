@@ -2,7 +2,6 @@
 import 'dart:async';
 import 'dart:ui';
 import 'package:background_location_sender/firebase_options.dart';
-import 'package:background_location_sender/home/logic/cubit/update_location_on_db_cubit.dart';
 import 'package:background_location_sender/notification/notification.dart';
 import 'package:background_location_sender/utility/shared_preference/shared_preference.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -27,10 +26,6 @@ void onStart(ServiceInstance service) async {
   );
 
   if (service is AndroidServiceInstance) {
-    service.on('start_service').listen((event) async {
-      await service.setAsForegroundService();
-    });
-
     service.on('setAsForeground').listen((event) async {
       await service.setAsForegroundService();
     });
@@ -53,11 +48,10 @@ void onStart(ServiceInstance service) async {
           final username = await CustomSharedPreference()
                   .getData(key: SharedPreferenceKeys.userName) ??
               "User";
+
           Geolocator.getPositionStream().listen((Position position) async {
             service.invoke('on_location_changed', position.toJson());
-            await UpdateLocationOnDbCubit().updateLocation(
-              position: position,
-            );
+            // await UpdateLocationOnDbCubit().updateLocation(position: position);
 
             await NotificationService(FlutterLocalNotificationsPlugin())
                 .showNotification(
@@ -85,27 +79,12 @@ class BackgroundService {
   final FlutterBackgroundService flutterBackgroundService =
       FlutterBackgroundService();
 
-  /////
-
-  BackgroundService();
-
   FlutterBackgroundService get instance => flutterBackgroundService;
 
   Future<void> initializeService() async {
-    // final notificationService =
-    //     NotificationService(FlutterLocalNotificationsPlugin());
-    // //OPTIONAL, using custom notification channel id
-    // const AndroidNotificationChannel channel = AndroidNotificationChannel(
-    //   notificationChannelId, // id
-    //   initialNotificationTitle, // title
-    //   description:
-    //       'This channel is used for showing background service notification.',
-    //   // description
-    //   importance: Importance.low, // importance must be at low or higher level
-    // );
-
-    // await notificationService.createChannel(channel);
-
+    await NotificationService(FlutterLocalNotificationsPlugin()).createChannel(
+        const AndroidNotificationChannel(
+            notificationChannelId, notificationChannelId));
     await flutterBackgroundService.configure(
       androidConfiguration: AndroidConfiguration(
         // this will be executed when app is in foreground or background in separated isolate
@@ -126,12 +105,11 @@ class BackgroundService {
         onForeground: onStart,
       ),
     );
-    // await flutterBackgroundService.startService();
+    await flutterBackgroundService.startService();
   }
 
-  Future<void> startService() async {
-    await flutterBackgroundService.startService();
-    flutterBackgroundService.invoke("start_service");
+  void setServiceAsForeGround() async {
+    flutterBackgroundService.invoke("setAsForeground");
   }
 
   void stopService() {
