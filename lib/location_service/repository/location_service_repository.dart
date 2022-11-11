@@ -21,23 +21,27 @@ class LocationServiceRepository {
       } else {
         permission = await Geolocator.checkPermission();
 
-        if (permission == LocationPermission.denied) {
+        if (permission == LocationPermission.always) {
+          return await Geolocator.getCurrentPosition();
+        } else {
           permission = await Geolocator.requestPermission();
           if (permission == LocationPermission.denied) {
             throw ('Location permissions are denied');
+          } else if (permission == LocationPermission.deniedForever) {
+            // Permissions are denied forever, handle appropriately.
+            throw ('Location permissions are permanently denied, we cannot request permissions.');
+          } else if (permission == LocationPermission.whileInUse) {
+            permission = await Geolocator.requestPermission();
+            // Permissions are denied forever, handle appropriately.
+            throw ('Set the location permissions to Always.');
+          } else {
+            if (permission == LocationPermission.always) {
+              return await Geolocator.getCurrentPosition();
+            } else {
+              throw ('Try again.');
+            }
           }
         }
-        if (permission == LocationPermission.deniedForever) {
-          // Permissions are denied forever, handle appropriately.
-          throw ('Location permissions are permanently denied, we cannot request permissions.');
-        }
-        if (permission == LocationPermission.whileInUse) {
-          permission = await Geolocator.requestPermission();
-          // Permissions are denied forever, handle appropriately.
-          throw ('Set the location permissions to Always.');
-        }
-
-        return await Geolocator.getCurrentPosition();
       }
     } catch (e) {
       rethrow;
