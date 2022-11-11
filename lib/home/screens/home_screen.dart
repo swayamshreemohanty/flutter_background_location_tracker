@@ -9,7 +9,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:background_location_sender/background_service.dart';
-import 'package:background_location_sender/firebase_messaging_service/service/firebase_message_service.dart';
 import 'package:background_location_sender/location_service/logic/location_controller/location_controller_cubit.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -30,17 +29,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> requestNotificationPermission() async {
     FirebaseMessaging messaging = FirebaseMessaging.instance;
-
-    NotificationSettings settings = await messaging.requestPermission();
-
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      Fluttertoast.showToast(msg: "User granted permission");
-    } else if (settings.authorizationStatus ==
-        AuthorizationStatus.provisional) {
-      Fluttertoast.showToast(msg: "User granted provisional permission");
-    } else {
-      Fluttertoast.showToast(msg: "User declined or has not accept permission");
-    }
+    await messaging.requestPermission();
+    // if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+    //   Fluttertoast.showToast(msg: "User granted permission");
+    // } else if (settings.authorizationStatus ==
+    //     AuthorizationStatus.provisional) {
+    //   Fluttertoast.showToast(msg: "User granted provisional permission");
+    // } else {
+    //   Fluttertoast.showToast(msg: "User declined or has not accept permission");
+    // }
   }
 
   @override
@@ -117,11 +114,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @pragma('vm:entry-point')
   @override
   Future<void> didChangeDependencies() async {
-    await BackgroundService().initializeService();
     await requestNotificationPermission();
-
     await context.read<NotificationService>().initialize(context);
-    await FirebaseMessageService().generateFirebaseMessageToken();
+    //TODO:Need to check
+    // await FirebaseMessageService().generateFirebaseMessageToken();
     final lastNotification =
         await FirebaseMessaging.instance.getInitialMessage();
 
@@ -150,35 +146,35 @@ class _HomeScreenState extends State<HomeScreen> {
       userNameTextController.text = userName.trim();
     }
 
-    final permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.always) {
-      BackgroundService()
-          .instance
-          .on('on_location_changed')
-          .listen((event) async {
-        if (event != null) {
-          final position = Position(
-            longitude: double.tryParse(event['longitude'].toString()) ?? 0.0,
-            latitude: double.tryParse(event['latitude'].toString()) ?? 0.0,
-            timestamp: DateTime.fromMillisecondsSinceEpoch(
-                event['timestamp'].toInt(),
-                isUtc: true),
-            accuracy: double.tryParse(event['accuracy'].toString()) ?? 0.0,
-            altitude: double.tryParse(event['altitude'].toString()) ?? 0.0,
-            heading: double.tryParse(event['heading'].toString()) ?? 0.0,
-            speed: double.tryParse(event['speed'].toString()) ?? 0.0,
-            speedAccuracy:
-                double.tryParse(event['speed_accuracy'].toString()) ?? 0.0,
-          );
-
-          await context
-              .read<LocationControllerCubit>()
-              .onLocationChanged(location: position);
-        }
-      });
-    } else if (permission == LocationPermission.denied) {
-      context.read<LocationControllerCubit>().enableGPSWithPermission();
+    //Start the service automatically if it was activated before closing the application
+    if (await BackgroundService().instance.isRunning()) {
+      // await BackgroundService().instance.startService();
+      await BackgroundService().initializeService();
     }
+    BackgroundService()
+        .instance
+        .on('on_location_changed')
+        .listen((event) async {
+      if (event != null) {
+        final position = Position(
+          longitude: double.tryParse(event['longitude'].toString()) ?? 0.0,
+          latitude: double.tryParse(event['latitude'].toString()) ?? 0.0,
+          timestamp: DateTime.fromMillisecondsSinceEpoch(
+              event['timestamp'].toInt(),
+              isUtc: true),
+          accuracy: double.tryParse(event['accuracy'].toString()) ?? 0.0,
+          altitude: double.tryParse(event['altitude'].toString()) ?? 0.0,
+          heading: double.tryParse(event['heading'].toString()) ?? 0.0,
+          speed: double.tryParse(event['speed'].toString()) ?? 0.0,
+          speedAccuracy:
+              double.tryParse(event['speed_accuracy'].toString()) ?? 0.0,
+        );
+
+        await context
+            .read<LocationControllerCubit>()
+            .onLocationChanged(location: position);
+      }
+    });
 
     super.didChangeDependencies();
   }
@@ -279,15 +275,24 @@ class _HomeScreenState extends State<HomeScreen> {
                 return ElevatedButton(
                   onPressed: () async {
                     if (formkey.currentState!.validate()) {
-                      FocusScope.of(context).unfocus();
-                      await CustomSharedPreference().storeData(
-                        key: SharedPreferenceKeys.userName,
-                        data: userNameTextController.text.trim(),
-                      );
-                      await BackgroundService().startService();
-                      await context
+                      final permission = await context
                           .read<LocationControllerCubit>()
-                          .locationFetchByDeviceGPS();
+                          .enableGPSWithPermission();
+
+                      if (permission) {
+                        FocusScope.of(context).unfocus();
+                        await CustomSharedPreference().storeData(
+                          key: SharedPreferenceKeys.userName,
+                          data: userNameTextController.text.trim(),
+                        );
+                        //Configure the service notification channel and start the service
+                        await BackgroundService().initializeService();
+                        //Set service as foreground.(Notification will available till the service end)
+                        BackgroundService().setServiceAsForeGround();
+                        await context
+                            .read<LocationControllerCubit>()
+                            .locationFetchByDeviceGPS();
+                      }
                     }
                   },
                   child: const Text("Start data sending"),
