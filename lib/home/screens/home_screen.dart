@@ -1,5 +1,6 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first, use_build_context_synchronously
 import 'dart:async';
+import 'package:background_location_sender/firebase_messaging_service/service/firebase_message_service.dart';
 import 'package:background_location_sender/home/screens/order_screen.dart';
 import 'package:background_location_sender/home/screens/ring_screen.dart';
 import 'package:background_location_sender/home/widgets/custom_text_form_field.dart';
@@ -117,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
     await requestNotificationPermission();
     await context.read<NotificationService>().initialize(context);
     //TODO:Need to check
-    // await FirebaseMessageService().generateFirebaseMessageToken();
+    await FirebaseMessageService().generateFirebaseMessageToken();
     final lastNotification =
         await FirebaseMessaging.instance.getInitialMessage();
 
