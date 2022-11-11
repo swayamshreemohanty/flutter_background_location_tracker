@@ -285,13 +285,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           key: SharedPreferenceKeys.userName,
                           data: userNameTextController.text.trim(),
                         );
+                        await context
+                            .read<LocationControllerCubit>()
+                            .locationFetchByDeviceGPS();
                         //Configure the service notification channel and start the service
                         await BackgroundService().initializeService();
                         //Set service as foreground.(Notification will available till the service end)
                         BackgroundService().setServiceAsForeGround();
-                        await context
-                            .read<LocationControllerCubit>()
-                            .locationFetchByDeviceGPS();
                       }
                     }
                   },
